@@ -1,0 +1,80 @@
+// Pin assignment
+const int ldrPin = A0;
+const int trigPin = 7;
+const int echoPin = 6;
+const int blueLed = 11;    // Day LED
+const int whiteLed = 12;  // Night LED
+const int greenLed = 9;    // Solar indicator
+const int redLed = 10;     // Backup indicator
+const int ecoBuzzer = 3;
+
+bool ledState = true;      // Track LED on/off for manual toggle
+bool solarActive = true;   // Simulate power source
+
+void setup() {
+  pinMode(trigPin, OUTPUT);
+  pinMode(echoPin, INPUT);
+  pinMode(blueLed, OUTPUT);
+  pinMode(whiteLed, OUTPUT);
+  pinMode(greenLed, OUTPUT);
+  pinMode(redLed, OUTPUT);
+  pinMode(ecoBuzzer, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  // Simulate solar/backup power (manually toggle solarActive for demo)
+  // If solarActive = true → solar mode (Vin active)
+  // If solarActive = false → backup mode (5V active)
+  
+  int lightLevel = analogRead(ldrPin); // Light intensity via LDR
+
+  // --- Ultrasonic distance measurement ---
+  digitalWrite(trigPin, LOW);
+  delayMicroseconds(2);
+  digitalWrite(trigPin, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(trigPin, LOW);
+  
+  long duration = pulseIn(echoPin, HIGH);
+  long distance = duration * 0.034 / 2;  // Convert to cm
+
+  // --- Manual LED toggle using proximity ---
+  if (distance > 0 && distance < 10) {   // If object detected within 15 cm
+    ledState = !ledState;                // Toggle LED state
+    delay(100);                         // Debounce delay to avoid rapid toggling
+  }
+
+  // --- LED control based on LDR & toggle state ---
+  if (ledState) {
+    if (lightLevel > 500) {              // Bright environment
+      digitalWrite(blueLed, HIGH);
+      digitalWrite(whiteLed, LOW);
+    } else {                             // Dark environment
+      digitalWrite(blueLed, LOW);
+      digitalWrite(whiteLed, HIGH);
+    }
+  } else {
+    digitalWrite(blueLed, LOW);
+    digitalWrite(whiteLed, LOW);
+  }
+
+  // --- Power source indicator and eco buzzer ---
+  if (solarActive) {                     // 9V / Vin active
+    digitalWrite(greenLed, HIGH);
+    digitalWrite(redLed, LOW);
+    tone(ecoBuzzer, 1000, 200);          // Eco beep
+  } else {                               // 5V backup active
+    digitalWrite(greenLed, LOW);
+    digitalWrite(redLed, HIGH);
+    noTone(ecoBuzzer);
+  }
+
+  // --- Debug info ---
+  Serial.print("LDR: "); Serial.print(lightLevel);
+  Serial.print(" | Distance: "); Serial.print(distance);
+  Serial.print(" cm | LED State: ");
+  Serial.println(ledState ? "ON" : "OFF");
+
+  delay(100);
+}

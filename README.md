@@ -205,8 +205,6 @@ The system demonstrated:
 ## Authors
 
 - Pranav J
-- Tharun S
-- Midhun P
 
 ---
 
